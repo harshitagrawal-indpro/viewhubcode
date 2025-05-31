@@ -9,6 +9,7 @@ import { checkAuthState, supabase } from "./integrations/supabase/client";
 // Pages
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Groups from "./pages/Groups";
 import GroupDetails from "./pages/GroupDetails";
@@ -266,7 +267,10 @@ function AppContent() {
 
   // Enhanced network status monitoring with automatic monitoring restart
   useEffect(() => {
-    if (!capacitorInitialized || !Network) return;
+    if (!capacitorInitialized || !Network) {
+      setNetworkStatus(true);
+      return;
+    }
 
     const setupNetworkMonitoring = async () => {
       try {
@@ -540,6 +544,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={!isAuthenticated ? <Index /> : <Navigate to="/dashboard" />} />
             <Route path="/signin" element={!isAuthenticated ? <SignIn /> : <Navigate to="/dashboard" />} />
+            <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
             <Route path="/user-type" element={!isAuthenticated ? <SignIn /> : <Navigate to="/dashboard" />} />
             
             <Route element={<ProtectedRoute />}>
