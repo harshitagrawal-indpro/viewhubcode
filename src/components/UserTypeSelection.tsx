@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { CircleUser, Briefcase } from "lucide-react";
 
-type UserType = "organizer" | "associate";
+type UserType = "organizer" | "associate"; // Removed "executor"
 
 interface UserTypeSelectionProps {
   onSelect: (type: UserType) => void;
@@ -41,7 +40,7 @@ const UserTypeSelection = ({ onSelect }: UserTypeSelectionProps) => {
           </div>
           <h3 className="font-medium text-base">Organizer</h3>
           <p className="text-sm text-foreground/60 text-center mt-2">
-            Create and manage groups
+            Create and manage groups, schedules, and monitor team activity
           </p>
         </button>
 
@@ -64,7 +63,7 @@ const UserTypeSelection = ({ onSelect }: UserTypeSelectionProps) => {
           </div>
           <h3 className="font-medium text-base">Associate</h3>
           <p className="text-sm text-foreground/60 text-center mt-2">
-            Connect to your workspace
+            Join groups and participate in organizational monitoring
           </p>
         </button>
       </div>

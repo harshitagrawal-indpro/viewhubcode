@@ -15,6 +15,7 @@ interface MobileUsageStats {
 
 interface MobileUsageStatsProps {
   groupId: string | null;
+  autoRefresh?: boolean; // Add prop to control auto-refresh
 }
 
 interface Schedule {
@@ -24,45 +25,7 @@ interface Schedule {
   is_break: boolean;
 }
 
-// Helper function to format time periods
-const formatTimePeriod = (minutes: number): string => {
-  if (minutes < 60) {
-    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-  }
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  }
-  
-  const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
-};
-
-// Check if a timestamp is within scheduled hours
-const isWithinSchedule = (timestamp: string, schedules: Schedule[]): boolean => {
-  if (!schedules || schedules.length === 0) return true;
-  
-  const date = new Date(timestamp);
-  const dayOfWeek = date.getDay();
-  
-  // Get time as string
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  const timeString = `${hours}:${minutes}:${seconds}`;
-  
-  // Find schedules for this day
-  const daySchedules = schedules.filter(s => s.day_of_week === dayOfWeek && !s.is_break);
-  if (daySchedules.length === 0) return false;
-  
-  // Check if current time is within any scheduled period
-  return daySchedules.some(schedule => {
-    return timeString >= schedule.start_time && timeString <= schedule.end_time;
-  });
-};
-
-export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
+export function MobileUsageStats({ groupId, autoRefresh = true }: MobileUsageStatsProps) {
   const [stats, setStats] = useState<MobileUsageStats>({
     totalUsageCount: 0,
     violationCount: 0,
@@ -76,7 +39,6 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
   const { toast } = useToast();
   const channelRef = useRef<any>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const activeUsageRef = useRef<{[key: string]: any}>({});
 
   // Fetch schedules for this group
   const fetchSchedules = useCallback(async () => {
@@ -93,14 +55,13 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
         return;
       }
       
-      console.log("Fetched schedules for stats:", data);
       setSchedules(data || []);
     } catch (error) {
       console.error("Exception fetching schedules:", error);
     }
   }, [groupId]);
 
-  // Main stats fetch function that can be called for initial load and refreshes
+  // Main stats fetch function
   const fetchStats = useCallback(async () => {
     if (!groupId) return;
     
@@ -120,7 +81,7 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
         .from('mobile_usage')
         .select('*', { count: 'exact', head: true })
         .eq('group_id', groupId)
-        .gt('duration', 15); // Usage over 15 seconds is considered a violation
+        .gt('duration', 15);
         
       if (violationError) throw violationError;
       
@@ -133,33 +94,12 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
         
       if (usageDataError) throw usageDataError;
       
-      // Update active usage records
-      usageData?.forEach(usage => {
-        // If no end_time, this is an active usage
-        if (!usage.end_time) {
-          activeUsageRef.current[usage.id] = usage;
-        } else {
-          // If there is an end_time and this was previously active, remove it
-          if (activeUsageRef.current[usage.id]) {
-            delete activeUsageRef.current[usage.id];
-          }
-        }
-      });
-      
       // Calculate average duration safely
       let avgDuration = 0;
       const validDurations = usageData?.filter(item => item.duration !== null && item.duration !== undefined) || [];
       if (validDurations.length > 0) {
         const sum = validDurations.reduce((acc, item) => acc + (item.duration || 0), 0);
         avgDuration = sum / validDurations.length;
-      }
-      
-      // Calculate outside schedule count
-      let outsideScheduleCount = 0;
-      if (schedules.length > 0) {
-        outsideScheduleCount = (usageData || []).filter(item => 
-          !isWithinSchedule(item.start_time, schedules)
-        ).length;
       }
       
       // Get last activity
@@ -190,7 +130,7 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
         averageDuration: avgDuration,
         lastActivity: lastActivity && lastActivity.length > 0 ? lastActivity[0].created_at : null,
         activeUsersCount: distinctUserIds,
-        outsideScheduleCount
+        outsideScheduleCount: 0 // Calculate this based on schedules if needed
       });
     } catch (error) {
       console.error("Error fetching mobile usage stats:", error);
@@ -202,7 +142,7 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
     } finally {
       setLoading(false);
     }
-  }, [groupId, schedules, toast]);
+  }, [groupId, toast]);
 
   // Fetch schedules when groupId changes
   useEffect(() => {
@@ -215,14 +155,16 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
     
     fetchStats();
     
-    // Set up auto-refresh interval (every 5 seconds for better real-time updates)
-    if (refreshIntervalRef.current) {
-      clearInterval(refreshIntervalRef.current);
+    // Set up auto-refresh only if enabled
+    if (autoRefresh) {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      
+      refreshIntervalRef.current = setInterval(() => {
+        fetchStats();
+      }, 3000); // Refresh every 3 seconds for real-time updates
     }
-    
-    refreshIntervalRef.current = setInterval(() => {
-      fetchStats();
-    }, 5000);
     
     // Clean up any previous subscription
     if (channelRef.current) {
@@ -241,19 +183,12 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          console.log('Mobile usage changed, refreshing stats immediately');
+          console.log('Mobile usage changed, refreshing stats');
           fetchStats();
         }
       )
-      .subscribe((status) => {
-        console.log(`Subscription status for mobile_usage_stats_${groupId}:`, status);
-        
-        if (status !== 'SUBSCRIBED') {
-          console.warn("Subscription may have failed, falling back to interval refresh");
-        }
-      });
+      .subscribe();
       
-    // Store the channel reference for cleanup
     channelRef.current = channel;
       
     return () => {
@@ -267,7 +202,7 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
         refreshIntervalRef.current = null;
       }
     };
-  }, [groupId, schedules, fetchStats]);
+  }, [groupId, schedules, fetchStats, autoRefresh]);
   
   // Format the average duration
   const formatDuration = (seconds: number) => {
@@ -291,7 +226,17 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
     const diffInMs = now.getTime() - date.getTime();
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
     
-    return formatTimePeriod(diffInMinutes);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+    }
+    
+    const hours = Math.floor(diffInMinutes / 60);
+    if (hours < 24) {
+      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    }
+    
+    const days = Math.floor(hours / 24);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
   };
   
   return (
@@ -301,38 +246,6 @@ export function MobileUsageStats({ groupId }: MobileUsageStatsProps) {
           <CardTitle className="text-sm font-medium flex items-center">
             <Smartphone className="h-4 w-4 mr-2" />
             Total Usage
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-          ) : (
-            <p className="text-2xl font-bold">{stats.totalUsageCount}</p>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Violations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
-          ) : (
-            <p className="text-2xl font-bold text-red-500">{stats.violationCount}</p>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            Average Duration
           </CardTitle>
         </CardHeader>
         <CardContent>

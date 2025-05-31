@@ -1,20 +1,70 @@
 {
   "name": "viewhub",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "ViewHub - Real-time Mobile Monitoring and Group Management for Organizations",
+  "author": "ViewHub Team",
+  "license": "MIT",
+  "homepage": "https://viewhub.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/viewhub.git"
+  },
+  "keywords": [
+    "mobile monitoring",
+    "react",
+    "typescript",
+    "capacitor",
+    "android",
+    "supabase"
+  ],
   "scripts": {
     "dev": "vite",
+    "start": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "preview": "vite preview",
+    "serve": "vite preview",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "clean": "rm -rf dist node_modules/.vite .capacitor",
+    "clean:install": "npm run clean && npm install --legacy-peer-deps",
+    "test": "echo \"No tests specified\" && exit 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "postinstall": "echo 'ViewHub installation complete! Run npm run dev to start development.'",
+    "android:init": "npx cap add android",
+    "android:build": "npm run build && npx cap sync android && npx cap open android",
+    "android:dev": "npm run build && npx cap sync android",
+    "android:sync": "npx cap sync android",
+    "android:run": "npm run build && npx cap sync android && npx cap run android",
+    "android:clean": "npx cap clean android",
+    "ios:init": "npx cap add ios",
+    "ios:build": "npm run build && npx cap sync ios && npx cap open ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:run": "npm run build && npx cap sync ios && npx cap run ios",
+    "capacitor:sync": "npx cap sync",
+    "capacitor:update": "npx cap update",
+    "capacitor:doctor": "npx cap doctor",
+    "capacitor:clean": "npx cap clean",
+    "web:build": "npm run build",
+    "web:preview": "npm run build && npm run preview",
+    "deploy:vercel": "npm run build && vercel --prod",
+    "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist"
   },
   "dependencies": {
-    "@capacitor/core": "^7.2.0",
+    "@capacitor/android": "^7.2.0",
     "@capacitor/app": "^7.0.1",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
     "@capacitor/device": "^7.0.1",
+    "@capacitor/keyboard": "^7.0.1",
     "@capacitor/local-notifications": "^7.0.1",
     "@capacitor/network": "^7.0.1",
+    "@capacitor/splash-screen": "^7.0.1",
+    "@capacitor/status-bar": "^7.0.1",
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-checkbox": "^1.0.4",
@@ -22,7 +72,6 @@
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-separator": "^1.0.3",
-    "@radix-ui/react-sheet": "^1.0.4",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
@@ -42,6 +91,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/node": "^20.11.24",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -52,6 +102,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "postcss": "^8.4.35",
+    "prettier": "^3.2.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
@@ -63,11 +114,77 @@
     "@capacitor/device": {
       "@capacitor/core": "$@capacitor/core"
     },
+    "@capacitor/keyboard": {
+      "@capacitor/core": "$@capacitor/core"
+    },
     "@capacitor/local-notifications": {
       "@capacitor/core": "$@capacitor/core"
     },
     "@capacitor/network": {
       "@capacitor/core": "$@capacitor/core"
+    },
+    "@capacitor/splash-screen": {
+      "@capacitor/core": "$@capacitor/core"
+    },
+    "@capacitor/status-bar": {
+      "@capacitor/core": "$@capacitor/core"
     }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": false,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "bracketSpacing": true,
+    "arrowParens": "avoid"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "@typescript-eslint/recommended",
+      "plugin:react-hooks/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "react-refresh"
+    ],
+    "rules": {
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          "allowConstantExport": true
+        }
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "warn"
+    },
+    "ignorePatterns": [
+      "dist",
+      "node_modules",
+      "android",
+      "ios"
+    ]
   }
 }

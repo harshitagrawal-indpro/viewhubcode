@@ -41,12 +41,12 @@ const Layout = () => {
       <DashboardHeader toggleSidebar={toggleSidebar} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sidebar - Only show in appropriate routes */}
-        {shouldShowSidebar() && (!isMobile || isSidebarOpen) && (
+        {/* Desktop Sidebar - Only show in appropriate routes and avoid duplication */}
+        {shouldShowSidebar() && !isMobile && (
           <aside
             className={`bg-white border-r border-border transition-all duration-300 flex flex-col ${
               isSidebarOpen ? "w-64" : "w-16"
-            } ${isMobile ? "absolute z-30 h-full" : ""}`}
+            }`}
           >
             <div className="flex-1 py-4">
               <div className="px-4 mb-4">
@@ -138,7 +138,7 @@ const Layout = () => {
         </main>
       </div>
 
-      {/* Mobile bottom navigation - Only show in appropriate routes and avoid duplication */}
+      {/* Mobile bottom navigation - Only show when needed and avoid duplication */}
       {isMobile && shouldShowSidebar() && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border z-10 px-2 py-1">
           <div className="flex justify-around">

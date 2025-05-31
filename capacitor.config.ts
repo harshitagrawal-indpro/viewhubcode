@@ -1,80 +1,71 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.970c021219814a01a3796f264e6ecb5e',
-  appName: 'viewhub-manager',
+  appId: 'com.viewhub.monitoring',
+  appName: 'ViewHub',
   webDir: 'dist',
-  bundledWebRuntime: false,
+  server: {
+    androidScheme: 'https'
+  },
   plugins: {
-    BackgroundRunner: {
-      label: 'com.viewhub.monitoring',
-      src: 'monitoring',
-      event: 'monitoring',
-      autoStart: true,
-      android: {
-        backgroundMode: true
-      }
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      backgroundColor: "#ffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: true,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#3b82f6",
+      splashFullScreen: true,
+      splashImmersive: true,
+      layoutName: "launch_screen",
+      useDialog: true
+    },
+    StatusBar: {
+      style: "LIGHT",
+      backgroundColor: "#3b82f6"
     },
     LocalNotifications: {
-      smallIcon: "ic_stat_icon",
-      iconColor: "#488AFF",
-      sound: "beep.wav",
-      importance: 4, // High importance for better background operation on Android
-      foreground: true
+      smallIcon: "ic_stat_icon_config_sample",
+      iconColor: "#3b82f6",
+      sound: "beep.wav"
     },
+    App: {
+      launchUrl: "com.viewhub.monitoring://"
+    },
+    Device: {},
+    Network: {},
     CapacitorHttp: {
       enabled: true
     },
-    PushNotifications: {
-      presentationOptions: ["badge", "sound", "alert"]
-    },
-    BackgroundTask: {
-      beforeExit: "backgroundTaskCallback"
-    },
-    App: {
-      webViewAllowBackgroundAudio: true,
-      appKeepAwake: true,
-      backgroundColor: "#ffffff"
+    Keyboard: {
+      resize: "body",
+      style: "dark",
+      resizeOnFullScreen: true
     }
   },
-  server: {
-    url: "https://970c0212-1981-4a01-a379-6f264e6ecb5e.lovableproject.com?forceHideBadge=true",
-    cleartext: true
-  },
   android: {
-    backgroundColor: "#ffffff",
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: true,
-    minSdkVersion: 22,
+    webContentsDebuggingEnabled: false,
+    appendUserAgent: "ViewHub-Mobile-App",
+    backgroundColor: "#ffffff",
+    toolbarColor: "#3b82f6",
+    navigationBarColor: "#ffffff",
+    hideLogs: true,
     allowBackup: true,
-    keepScreenOn: true,
-    windowSoftInputMode: "adjustResize",
-    // Enhanced background operation settings
-    backgroundMode: true,
-    foregroundServiceType: ["dataSync", "location", "connectedDevice"],
-    notification: {
-      importance: 4, // High importance for better background operation
-    },
-    // Prevents the app from being killed in background
-    hardwareAcceleration: true,
-    // Wake the device if notifications arrive
-    allowScreenOff: false
+    useLegacyBridge: false,
+    startPath: "/"
   },
   ios: {
-    contentInset: "always",
-    allowsBackForwardNavigationGestures: true,
-    scrollEnabled: true,
-    limitsNavigationsToAppBoundDomains: true,
+    scheme: "ViewHub",
+    contentInset: "automatic",
+    allowsLinkPreview: true,
     backgroundColor: "#ffffff",
-    allowsInlineMediaPlayback: true,
-    // Enhanced background operation settings
-    capacitorIOSPath: "App",
-    scheme: "viewhubmanager",
-    // Background fetch mode
-    backgroundMode: ["fetch", "remote-notification", "processing"],
-    // Keep wake lock
-    allowsAirPlayForMediaPlayback: true
+    scrollEnabled: true,
+    limitsNavigationsToAppBoundDomains: false
   }
 };
 
