@@ -82,7 +82,7 @@ window.addEventListener('unhandledrejection', (event) => {
   // Prevent the default browser behavior (logging to console)
   event.preventDefault();
 });
-
+//
 // Safe root element access
 const rootElement = document.getElementById("root");
 
